@@ -10,7 +10,7 @@ A modern web-based GUI for converting images to C arrays for embedded developmen
 - Export to .h, .c, or custom file formats
 - Drag & drop interface
 
-## Live Demo
+## To Use
 Visit: https://jobitjoseph.github.io/image2c
 
 ## Original C Program
