@@ -1,0 +1,1383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image to C Converter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            height: 100vh;
+            padding: 5px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .app-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            max-width: 1400px;
+            width: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            margin: 0 auto;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-height: calc(100vh - 10px);
+            overflow: hidden;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.2em;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1em;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            flex: 1;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            max-height: 100%;
+            overflow: hidden;
+        }
+
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            max-height: 100%;
+            overflow: hidden;
+        }
+
+        .drop-zone {
+            border: 3px dashed #667eea;
+            border-radius: 15px;
+            padding: 30px 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
+            position: relative;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .drop-zone::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(102, 126, 234, 0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .drop-zone:hover::before {
+            left: 100%;
+        }
+
+        .drop-zone.dragover {
+            border-color: #764ba2;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+            transform: scale(1.02);
+        }
+
+        .drop-zone-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .upload-icon {
+            font-size: 3em;
+            color: #667eea;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        .drop-zone h3 {
+            font-size: 1.3em;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .drop-zone p {
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .browse-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 10px 25px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .browse-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .file-info {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            height: 80px;
+            border-left: 4px solid #667eea;
+            overflow: hidden;
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .file-info h4 {
+            color: #333;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.95em;
+        }
+
+        .file-details {
+            color: #666;
+            font-size: 0.85em;
+        }
+
+        .options {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+
+        .options h3 {
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 1.1em;
+        }
+
+        .option-group {
+            margin-bottom: 15px;
+        }
+
+        .option-group label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+            color: #333;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+
+        .checkbox {
+            width: 18px;
+            height: 18px;
+            border: 2px solid #667eea;
+            border-radius: 4px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .checkbox input[type="checkbox"] {
+            opacity: 0;
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .checkbox input[type="checkbox"]:checked + .checkmark {
+            background: #667eea;
+            transform: scale(1.1);
+        }
+
+        .checkbox input[type="checkbox"]:checked + .checkmark::after {
+            opacity: 1;
+            transform: rotate(45deg) scale(1);
+        }
+
+        .checkmark {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .checkmark::after {
+            content: '';
+            position: absolute;
+            left: 5px;
+            top: 1px;
+            width: 4px;
+            height: 8px;
+            border: solid white;
+            border-width: 0 2px 2px 0;
+            opacity: 0;
+            transform: rotate(45deg) scale(0);
+            transition: all 0.3s ease;
+        }
+
+        .variable-name, .output-format {
+            margin-bottom: 15px;
+        }
+
+        .variable-name label, .output-format label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #333;
+            font-size: 0.9em;
+        }
+
+        .variable-name input, .output-format select {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 0.9em;
+            transition: border-color 0.3s ease;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        }
+
+        .variable-name input:focus, .output-format select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .reset-name-btn {
+            background: #f0f0f0;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            width: 38px;
+            height: 38px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .reset-name-btn:hover {
+            background: #667eea;
+            border-color: #667eea;
+            color: white;
+            transform: rotate(180deg);
+        }
+
+        .custom-extension {
+            margin-top: 8px;
+        }
+
+        .custom-extension input {
+            width: 100%;
+            padding: 8px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 0.9em;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        }
+
+        .convert-btn, .save-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+            margin-bottom: 10px;
+        }
+
+        .convert-btn:hover:not(:disabled), .save-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .convert-btn:disabled, .save-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .save-btn {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+        }
+
+        .save-btn:hover:not(:disabled) {
+            box-shadow: 0 8px 25px rgba(76, 175, 80, 0.4);
+        }
+
+        .output {
+            background: #1e1e1e;
+            border-radius: 10px;
+            padding: 20px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            max-height: 100%;
+            min-height: 100%;
+            overflow: hidden;
+        }
+
+        .output-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .output-title {
+            color: #fff;
+            font-weight: 600;
+            font-size: 1em;
+        }
+
+        .copy-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+            transition: background 0.3s ease;
+        }
+
+        .copy-btn:hover {
+            background: #45a049;
+        }
+
+        .copy-btn.copied {
+            background: #2196F3;
+        }
+
+        .output pre {
+            color: #f8f8f2;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 0.8em;
+            line-height: 1.3;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-y: auto;
+            overflow-x: hidden;
+            flex: 1;
+            margin: 0;
+            max-height: 100%;
+            min-height: 0;
+        }
+
+        .output-placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            color: #666;
+            text-align: center;
+            font-style: italic;
+            max-height: 100%;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 3px;
+            background: #e0e0e0;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 15px;
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .supported-formats {
+            text-align: center;
+            color: #888;
+            font-size: 0.8em;
+            margin-top: 15px;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .processing {
+            animation: pulse 1.5s infinite;
+        }
+
+        /* Responsive design */
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .app-container {
+                padding: 20px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .drop-zone {
+                padding: 30px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="header">
+            <h1>Image to C Converter</h1>
+            <p>Convert images to C arrays for embedded development</p>
+        </div>
+
+        <div class="main-content">
+            <div class="left-panel">
+                <div class="drop-zone" id="dropZone">
+                    <div class="drop-zone-content">
+                        <div class="upload-icon">📷</div>
+                        <h3>Drop your image here</h3>
+                        <p>or click to browse files</p>
+                        <button class="browse-btn" onclick="document.getElementById('fileInput').click()">
+                            Browse Files
+                        </button>
+                    </div>
+                </div>
+
+                <input type="file" id="fileInput" class="file-input" 
+                       accept=".png,.jpg,.jpeg,.bmp,.tiff,.tif,.gif,.ppm,.pcx,.tga">
+
+                <div class="file-info" id="fileInfo">
+                    <h4>
+                        <span>📁</span>
+                        <span id="fileName">No file selected</span>
+                    </h4>
+                    <div class="file-details" id="fileDetails"></div>
+                </div>
+
+                <div class="options">
+                    <h3>Options</h3>
+                    
+                    <div class="option-group">
+                        <label>
+                            <div class="checkbox">
+                                <input type="checkbox" id="stripMetadata">
+                                <div class="checkmark"></div>
+                            </div>
+                            Strip metadata (remove headers, keep compressed data only)
+                        </label>
+                    </div>
+
+                    <div class="variable-name">
+                        <label for="variableName">Array Variable Name:</label>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <input type="text" id="variableName" placeholder="image_data" value="image_data">
+                            <button type="button" class="reset-name-btn" onclick="resetVariableName()" title="Reset to filename">
+                                🔄
+                            </button>
+                        </div>
+                        <small style="color: #666; font-size: 0.8em; margin-top: 4px; display: block;">
+                            Auto-generated from filename. Click 🔄 to reset or edit manually.
+                        </small>
+                    </div>
+
+                    <div class="output-format">
+                        <label for="outputFormat">Output File Format:</label>
+                        <select id="outputFormat" onchange="toggleCustomExtension()">
+                            <option value=".h">Header File (.h)</option>
+                            <option value=".c">Source File (.c)</option>
+                            <option value="custom">Custom Extension</option>
+                        </select>
+                        <div class="custom-extension" id="customExtension" style="display: none;">
+                            <input type="text" id="customExt" placeholder=".txt" value=".txt">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="progress-bar" id="progressBar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+
+                <button class="convert-btn" id="convertBtn" onclick="convertImage()" disabled>
+                    Select an image to convert
+                </button>
+
+                <button class="save-btn" id="saveBtn" onclick="saveToFile()" disabled>
+                    Save as File
+                </button>
+
+                <div class="supported-formats">
+                    Supports: PNG, JPEG, BMP, TIFF, GIF, PPM, PCX, TGA
+                </div>
+            </div>
+
+            <div class="right-panel">
+                <div class="output" id="output">
+                    <div class="output-header">
+                        <div class="output-title">Generated C Code</div>
+                        <button class="copy-btn" id="copyBtn" onclick="copyToClipboard()">Copy</button>
+                    </div>
+                    <div class="output-placeholder" id="outputPlaceholder">
+                        Generated code will appear here after conversion
+                    </div>
+                    <pre id="outputCode" style="display: none;"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedFile = null;
+        let imageData = null;
+        let originalFileName = '';
+        let generatedCode = '';
+
+        // File input handling
+        const fileInput = document.getElementById('fileInput');
+        const dropZone = document.getElementById('dropZone');
+        const fileInfo = document.getElementById('fileInfo');
+        const convertBtn = document.getElementById('convertBtn');
+        const saveBtn = document.getElementById('saveBtn');
+        const output = document.getElementById('output');
+
+        // Image format constants (matching original C code)
+        const FILETYPE = {
+            UNKNOWN: 0, PNG: 1, JPEG: 2, BMP: 3, OS2BMP: 4, TIFF: 5,
+            GIF: 6, PPM: 7, TARGA: 8, JEDMICS: 9, CALS: 10, PCX: 11
+        };
+
+        const COMPTYPE = {
+            UNKNOWN: 0, FLATE: 1, JPEG: 2, NONE: 3, RLE: 4, LZW: 5,
+            G3: 6, G4: 7, PACKBITS: 8, HUFFMAN: 9, THUNDERSCAN: 10, JBIG: 11
+        };
+
+        const szType = ["Unknown", "PNG", "JFIF", "Win BMP", "OS/2 BMP", "TIFF", "GIF", "Portable Pixmap", "Targa", "JEDMICS", "CALS", "PCX"];
+        const szComp = ["Unknown", "Flate", "JPEG", "None", "RLE", "LZW", "G3", "G4", "Packbits", "Modified Huffman", "Thunderscan RLE", "JBIG (T.85)"];
+        const szPhotometric = ["WhiteIsZero", "BlackIsZero", "RGB", "Palette Color", "Transparency Mask", "CMYK", "YCbCr", "Unknown"];
+        const szPlanar = ["Unknown", "Chunky", "Planar"];
+
+        // Drag and drop handlers
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', handleDragOver);
+        dropZone.addEventListener('drop', handleDrop);
+        dropZone.addEventListener('dragleave', handleDragLeave);
+        fileInput.addEventListener('change', handleFileSelect);
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        }
+
+        function handleFileSelect(e) {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        }
+
+        function handleFile(file) {
+            selectedFile = file;
+            displayFileInfo(file);
+            loadImageData(file);
+        }
+
+        function displayFileInfo(file) {
+            const fileName = document.getElementById('fileName');
+            const fileDetails = document.getElementById('fileDetails');
+            const variableNameInput = document.getElementById('variableName');
+            
+            fileName.textContent = file.name;
+            fileDetails.innerHTML = `
+                <strong>Size:</strong> ${formatFileSize(file.size)}<br>
+                <strong>Type:</strong> ${file.type || 'Unknown'}<br>
+                <strong>Last Modified:</strong> ${new Date(file.lastModified).toLocaleString()}
+            `;
+            
+            fileInfo.style.visibility = 'visible';
+            fileInfo.style.opacity = '1';
+            convertBtn.disabled = false;
+            convertBtn.textContent = 'Convert to C Array';
+
+            // Generate and set variable name from filename
+            originalFileName = file.name;
+            const generatedName = generateVariableNameFromFile(file.name);
+            variableNameInput.value = generatedName;
+            
+            // Add visual feedback that the name was auto-generated
+            variableNameInput.style.borderColor = '#4CAF50';
+            setTimeout(() => {
+                variableNameInput.style.borderColor = '#e0e0e0';
+            }, 1000);
+        }
+
+        function generateVariableNameFromFile(filename) {
+            // Remove file extension
+            let baseName = filename.replace(/\.[^/.]+$/, "");
+            
+            // Convert to valid C identifier
+            let cleanName = baseName
+                // Replace spaces and hyphens with underscores
+                .replace(/[\s\-]/g, '_')
+                // Remove all non-alphanumeric characters except underscores
+                .replace(/[^a-zA-Z0-9_]/g, '')
+                // Convert to lowercase for consistency
+                .toLowerCase()
+                // Remove consecutive underscores
+                .replace(/_+/g, '_')
+                // Remove leading/trailing underscores
+                .replace(/^_+|_+$/g, '');
+            
+            // Ensure it starts with a letter or underscore (not a number)
+            if (/^[0-9]/.test(cleanName)) {
+                cleanName = 'img_' + cleanName;
+            }
+            
+            // If the result is empty, use default
+            if (!cleanName) {
+                cleanName = 'image_data';
+            }
+            
+            return cleanName;
+        }
+
+        function resetVariableName() {
+            if (originalFileName) {
+                const variableNameInput = document.getElementById('variableName');
+                const newName = generateVariableNameFromFile(originalFileName);
+                variableNameInput.value = newName;
+                
+                // Visual feedback
+                variableNameInput.style.borderColor = '#4CAF50';
+                variableNameInput.focus();
+                setTimeout(() => {
+                    variableNameInput.style.borderColor = '#e0e0e0';
+                }, 1000);
+            }
+        }
+
+        function toggleCustomExtension() {
+            const outputFormat = document.getElementById('outputFormat');
+            const customExtension = document.getElementById('customExtension');
+            
+            if (outputFormat.value === 'custom') {
+                customExtension.style.display = 'block';
+            } else {
+                customExtension.style.display = 'none';
+            }
+        }
+
+        function loadImageData(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                imageData = new Uint8Array(e.target.result);
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Utility functions for reading binary data (matching original C code)
+        function INTELSHORT(data, offset) {
+            return data[offset] + (data[offset + 1] << 8);
+        }
+
+        function INTELLONG(data, offset) {
+            return data[offset] + (data[offset + 1] << 8) + (data[offset + 2] << 16) + (data[offset + 3] << 24);
+        }
+
+        function MOTOSHORT(data, offset) {
+            return (data[offset] << 8) + data[offset + 1];
+        }
+
+        function MOTOLONG(data, offset) {
+            return (data[offset] << 24) + (data[offset + 1] << 16) + (data[offset + 2] << 8) + data[offset + 3];
+        }
+
+        function TIFFSHORT(data, offset, bMotorola) {
+            if (bMotorola) {
+                return (data[offset] << 8) + data[offset + 1];
+            } else {
+                return data[offset] + (data[offset + 1] << 8);
+            }
+        }
+
+        function TIFFLONG(data, offset, bMotorola) {
+            if (bMotorola) {
+                return (data[offset] << 24) + (data[offset + 1] << 16) + (data[offset + 2] << 8) + data[offset + 3];
+            } else {
+                return data[offset] + (data[offset + 1] << 8) + (data[offset + 2] << 16) + (data[offset + 3] << 24);
+            }
+        }
+
+        function TIFFVALUE(data, offset, bMotorola) {
+            const iType = TIFFSHORT(data, offset + 2, bMotorola);
+            const count = TIFFSHORT(data, offset + 4, bMotorola);
+            
+            if (count > 1) {
+                return TIFFLONG(data, offset + 8, bMotorola);
+            }
+            
+            switch (iType) {
+                case 3: // Short
+                    return TIFFSHORT(data, offset + 8, bMotorola);
+                case 4: // Long
+                case 7: // Undefined
+                    return TIFFLONG(data, offset + 8, bMotorola);
+                case 6: // Signed byte
+                    return data[offset + 8];
+                case 2: // ASCII
+                case 5: // Unsigned Rational
+                case 10: // Signed Rational
+                    return TIFFLONG(data, offset + 8, bMotorola);
+                default:
+                    return 0;
+            }
+        }
+
+        function parseNumber(data, offset) {
+            let i = 0;
+            let currentOffset = offset;
+            
+            while (currentOffset < data.length && data[currentOffset] >= 48 && data[currentOffset] <= 57) { // '0' to '9'
+                i = i * 10 + (data[currentOffset] - 48);
+                currentOffset++;
+            }
+            
+            return { value: i, newOffset: currentOffset + 1 };
+        }
+
+        function countGIFFrames(data) {
+            let numFrames = 0;
+            let offset = 10;
+            let done = false;
+            
+            let c = data[offset];
+            offset += 3;
+            
+            if (c & 0x80) {
+                c &= 7;
+                offset += (2 << c) * 3;
+            }
+            
+            while (!done && offset < data.length) {
+                let ext = true;
+                
+                while (!done && ext && offset < data.length) {
+                    switch (data[offset]) {
+                        case 0x3b:
+                            numFrames--;
+                            done = true;
+                            continue;
+                        case 0x21:
+                            offset += 2;
+                            offset += data[offset];
+                            offset++;
+                            c = data[offset++];
+                            while (c && offset < data.length) {
+                                offset += c;
+                                c = data[offset++];
+                            }
+                            if (c !== 0) {
+                                numFrames--;
+                                done = true;
+                                continue;
+                            }
+                            break;
+                        case 0x2c:
+                            ext = false;
+                            break;
+                        default:
+                            numFrames--;
+                            done = true;
+                            continue;
+                    }
+                }
+                
+                if (offset >= data.length) {
+                    numFrames--;
+                    done = true;
+                    continue;
+                }
+                
+                c = data[offset + 9];
+                offset += 10;
+                
+                if (c & 0x80) {
+                    c &= 7;
+                    offset += (2 << c) * 3;
+                }
+                
+                offset++;
+                c = data[offset++];
+                
+                while (c && offset < data.length) {
+                    offset += c;
+                    if (offset > data.length) {
+                        numFrames--;
+                        break;
+                    }
+                    c = data[offset++];
+                }
+                
+                if (offset > data.length || data[offset] === 0x3b) {
+                    done = true;
+                } else {
+                    numFrames++;
+                }
+            }
+            
+            return numFrames;
+        }
+
+        function analyzeImageInfo(data, fileSize) {
+            const analysis = {
+                fileType: FILETYPE.UNKNOWN,
+                compression: COMPTYPE.UNKNOWN,
+                width: 0,
+                height: 0,
+                bpp: 0,
+                dataOffset: 0,
+                dataSize: 0,
+                options: '',
+                frames: 1,
+                photoMetric: 7,
+                planar: 1
+            };
+
+            if (fileSize < 64) return analysis;
+
+            // File type detection (matching original C code exactly)
+            if (MOTOLONG(data, 0) === 0x89504e47) { // PNG
+                analysis.fileType = FILETYPE.PNG;
+            } else if (data[0] === 0x42 && data[1] === 0x4D) { // BMP
+                if (data[14] === 0x28) {
+                    analysis.fileType = FILETYPE.BMP;
+                } else {
+                    analysis.fileType = FILETYPE.OS2BMP;
+                }
+            } else if (data[0] === 0x0a && data[1] < 0x6 && data[2] === 0x01) {
+                analysis.fileType = FILETYPE.PCX;
+            } else if (INTELLONG(data, 0) === 0x80 && (data[36] === 4 || data[36] === 6)) {
+                analysis.fileType = FILETYPE.JEDMICS;
+            } else if (INTELLONG(data, 0) === 0x64637273) {
+                analysis.fileType = FILETYPE.CALS;
+            } else if ((MOTOLONG(data, 0) & 0xffffff00) === 0xffd8ff00) { // JPEG
+                analysis.fileType = FILETYPE.JPEG;
+            } else if (MOTOLONG(data, 0) === 0x47494638) { // GIF
+                analysis.fileType = FILETYPE.GIF;
+            } else if ((data[0] === 0x49 && data[1] === 0x49) || (data[0] === 0x4D && data[1] === 0x4D)) {
+                analysis.fileType = FILETYPE.TIFF;
+            } else {
+                const i = MOTOLONG(data, 0) & 0xffff8080;
+                if (i === 0x50360000 || i === 0x50350000 || i === 0x50340000) {
+                    analysis.fileType = FILETYPE.PPM;
+                }
+            }
+
+            // Check for Targa
+            if (analysis.fileType === FILETYPE.UNKNOWN) {
+                const i = data[1] & 0xfe;
+                const j = data[2];
+                if (MOTOLONG(data, 0) !== 0x1ba && MOTOLONG(data, 0) !== 0x1b3 && 
+                    i === 0 && (j === 1 || j === 2 || j === 3 || j === 9 || j === 10 || j === 11)) {
+                    analysis.fileType = FILETYPE.TARGA;
+                }
+            }
+
+            // Parse specific format details (implementing original C logic)
+            switch (analysis.fileType) {
+                case FILETYPE.PNG:
+                    if (MOTOLONG(data, 12) === 0x49484452) { // 'IHDR'
+                        analysis.width = MOTOLONG(data, 16);
+                        analysis.height = MOTOLONG(data, 20);
+                        analysis.compression = COMPTYPE.FLATE;
+                        const bits = data[24];
+                        const pixelType = data[25];
+                        switch (pixelType) {
+                            case 0:
+                            case 3:
+                                analysis.bpp = bits;
+                                break;
+                            case 2:
+                                analysis.bpp = bits * 3;
+                                break;
+                            case 4:
+                                analysis.bpp = bits * 2;
+                                break;
+                            case 6:
+                                analysis.bpp = bits * 4;
+                                break;
+                        }
+                        analysis.options = data[28] === 1 ? ', Interlaced' : ', Not interlaced';
+                    }
+                    break;
+
+                case FILETYPE.BMP:
+                    analysis.compression = COMPTYPE.NONE;
+                    analysis.width = INTELSHORT(data, 18);
+                    analysis.height = INTELSHORT(data, 22);
+                    if (analysis.height & 0x8000) {
+                        analysis.height = 65536 - analysis.height;
+                    }
+                    analysis.bpp = data[28] * data[26];
+                    analysis.dataOffset = data[10];
+                    analysis.dataSize = fileSize - analysis.dataOffset;
+                    if (data[30] && (analysis.bpp === 4 || analysis.bpp === 8)) {
+                        analysis.compression = COMPTYPE.RLE;
+                    }
+                    break;
+
+                case FILETYPE.OS2BMP:
+                    analysis.compression = COMPTYPE.NONE;
+                    if (data[14] === 12) {
+                        analysis.width = INTELSHORT(data, 18);
+                        analysis.height = INTELSHORT(data, 20);
+                        analysis.bpp = data[22] * data[24];
+                    } else {
+                        analysis.width = INTELSHORT(data, 18);
+                        analysis.height = INTELSHORT(data, 22);
+                        analysis.bpp = data[28] * data[26];
+                    }
+                    if (analysis.height & 0x8000) {
+                        analysis.height = 65536 - analysis.height;
+                    }
+                    if (data[30] === 1 || data[30] === 2 || data[30] === 4) {
+                        analysis.compression = COMPTYPE.RLE;
+                    }
+                    break;
+
+                case FILETYPE.TARGA:
+                    analysis.width = INTELSHORT(data, 12);
+                    analysis.height = INTELSHORT(data, 14);
+                    analysis.bpp = data[16];
+                    if (data[2] === 3 || data[2] === 11) {
+                        analysis.bpp = 1;
+                    }
+                    if (data[2] < 9) {
+                        analysis.compression = COMPTYPE.NONE;
+                    } else {
+                        analysis.compression = COMPTYPE.RLE;
+                    }
+                    break;
+
+                case FILETYPE.PPM:
+                    if (data[1] === 52) analysis.bpp = 1; // '4'
+                    else if (data[1] === 53) analysis.bpp = 8; // '5'
+                    else if (data[1] === 54) analysis.bpp = 24; // '6'
+                    
+                    let j = 2;
+                    while ((data[j] === 0xa || data[j] === 0xd) && j < 256) j++;
+                    while (data[j] === 35 && j < 256) { // '#' comment
+                        while (data[j] !== 0xa && data[j] !== 0xd && j < 256) j++;
+                        while ((data[j] === 0xa || data[j] === 0xd) && j < 256) j++;
+                    }
+                    
+                    const widthResult = parseNumber(data, j);
+                    analysis.width = widthResult.value;
+                    const heightResult = parseNumber(data, widthResult.newOffset);
+                    analysis.height = heightResult.value;
+                    analysis.compression = COMPTYPE.NONE;
+                    break;
+
+                case FILETYPE.PCX:
+                    analysis.width = 1 + INTELSHORT(data, 8) - INTELSHORT(data, 4);
+                    analysis.height = 1 + INTELSHORT(data, 10) - INTELSHORT(data, 6);
+                    analysis.compression = COMPTYPE.PACKBITS;
+                    analysis.bpp = data[3] * data[65];
+                    break;
+
+                case FILETYPE.JEDMICS:
+                    analysis.bpp = 1;
+                    analysis.width = INTELSHORT(data, 6) << 3;
+                    analysis.height = INTELSHORT(data, 4);
+                    analysis.compression = COMPTYPE.G4;
+                    break;
+
+                case FILETYPE.CALS:
+                    analysis.bpp = 1;
+                    analysis.compression = COMPTYPE.G4;
+                    // Note: CALS parsing would require reading more data
+                    break;
+
+                case FILETYPE.JPEG:
+                    analysis.compression = COMPTYPE.JPEG;
+                    let i = 2, marker = 0;
+                    while (i < Math.min(data.length, 1024) && marker !== 0xffc0) {
+                        marker = MOTOSHORT(data, i) & 0xfffc;
+                        if (marker < 0xff00) {
+                            i += 2;
+                            continue;
+                        }
+                        if (marker === 0xffc0) break;
+                        const segmentLength = MOTOSHORT(data, i + 2);
+                        i += 2 + segmentLength;
+                    }
+                    if (marker === 0xffc0 && i + 9 < data.length) {
+                        analysis.bpp = data[i + 4];
+                        analysis.height = MOTOSHORT(data, i + 5);
+                        analysis.width = MOTOSHORT(data, i + 7);
+                        analysis.bpp = analysis.bpp * data[i + 9];
+                        const subSample = data[i + 11];
+                        analysis.options = `, color subsampling = ${subSample >> 4}:${subSample & 0xf}`;
+                    }
+                    break;
+
+                case FILETYPE.GIF:
+                    analysis.compression = COMPTYPE.LZW;
+                    analysis.width = INTELSHORT(data, 6);
+                    analysis.height = INTELSHORT(data, 8);
+                    analysis.bpp = (data[10] & 7) + 1;
+                    analysis.options = (data[10] & 64) ? ', Interlaced' : ', Not interlaced';
+                    analysis.frames = countGIFFrames(data);
+                    break;
+
+                case FILETYPE.TIFF:
+                    const bMotorola = data[0] === 0x4D;
+                    const ifdOffset = TIFFLONG(data, 4, bMotorola);
+                    if (ifdOffset < data.length) {
+                        const tagCount = TIFFSHORT(data, ifdOffset, bMotorola);
+                        let offset = ifdOffset + 2;
+                        
+                        analysis.bpp = 1;
+                        analysis.planar = 1;
+                        analysis.compression = COMPTYPE.NONE;
+                        analysis.photoMetric = 7;
+                        
+                        for (let tagIndex = 0; tagIndex < tagCount && offset + 12 <= data.length; tagIndex++) {
+                            const tag = TIFFSHORT(data, offset, bMotorola);
+                            switch (tag) {
+                                case 256: // ImageWidth
+                                    analysis.width = TIFFVALUE(data, offset, bMotorola);
+                                    break;
+                                case 257: // ImageLength
+                                    analysis.height = TIFFVALUE(data, offset, bMotorola);
+                                    break;
+                                case 258: // BitsPerSample
+                                    const count = TIFFLONG(data, offset + 4, bMotorola);
+                                    if (count === 1) {
+                                        analysis.bpp = TIFFVALUE(data, offset, bMotorola);
+                                    } else {
+                                        const bpsOffset = TIFFLONG(data, offset + 8, bMotorola);
+                                        if (bpsOffset < data.length) {
+                                            analysis.bpp = count * TIFFSHORT(data, bpsOffset, bMotorola);
+                                        }
+                                    }
+                                    break;
+                                case 259: // Compression
+                                    const comp = TIFFVALUE(data, offset, bMotorola);
+                                    switch (comp) {
+                                        case 1: analysis.compression = COMPTYPE.NONE; break;
+                                        case 2: analysis.compression = COMPTYPE.HUFFMAN; break;
+                                        case 3: analysis.compression = COMPTYPE.G3; break;
+                                        case 4: analysis.compression = COMPTYPE.G4; break;
+                                        case 5: analysis.compression = COMPTYPE.LZW; break;
+                                        case 6:
+                                        case 7: analysis.compression = COMPTYPE.JPEG; break;
+                                        case 8:
+                                        case 32946: analysis.compression = COMPTYPE.FLATE; break;
+                                        case 9: analysis.compression = COMPTYPE.JBIG; break;
+                                        case 32773: analysis.compression = COMPTYPE.PACKBITS; break;
+                                        case 32809: analysis.compression = COMPTYPE.THUNDERSCAN; break;
+                                        default: analysis.compression = COMPTYPE.UNKNOWN; break;
+                                    }
+                                    break;
+                                case 262: // PhotometricInterpretation
+                                    analysis.photoMetric = TIFFVALUE(data, offset, bMotorola);
+                                    if (analysis.photoMetric > 6) analysis.photoMetric = 7;
+                                    break;
+                                case 273: // StripOffsets
+                                    analysis.dataOffset = TIFFVALUE(data, offset, bMotorola);
+                                    break;
+                                case 279: // StripByteCounts
+                                    analysis.dataSize = TIFFVALUE(data, offset, bMotorola);
+                                    break;
+                                case 284: // PlanarConfiguration
+                                    analysis.planar = TIFFVALUE(data, offset, bMotorola);
+                                    if (analysis.planar < 1 || analysis.planar > 2) analysis.planar = 0;
+                                    break;
+                            }
+                            offset += 12;
+                        }
+                        analysis.options = `, Photometric = ${szPhotometric[analysis.photoMetric]}, Planar config = ${szPlanar[analysis.planar]}`;
+                    }
+                    break;
+            }
+
+            return analysis;
+        }
+
+        async function convertImage() {
+            if (!selectedFile || !imageData) {
+                alert('Please select a file first.');
+                return;
+            }
+
+            const progressBar = document.getElementById('progressBar');
+            const progressFill = document.getElementById('progressFill');
+            const outputCode = document.getElementById('outputCode');
+            const outputPlaceholder = document.getElementById('outputPlaceholder');
+            
+            // Show progress bar
+            progressBar.style.visibility = 'visible';
+            progressBar.style.opacity = '1';
+            convertBtn.disabled = true;
+            convertBtn.classList.add('processing');
+            convertBtn.textContent = 'Converting...';
+
+            // Simulate processing progress
+            for (let i = 0; i <= 100; i += 10) {
+                progressFill.style.width = i + '%';
+                await new Promise(resolve => setTimeout(resolve, 50));
+            }
+
+            try {
+                const variableName = document.getElementById('variableName').value || 'image_data';
+                const stripMetadata = document.getElementById('stripMetadata').checked;
+                
+                generatedCode = await processImage(selectedFile, imageData, variableName, stripMetadata);
+                
+                outputCode.textContent = generatedCode;
+                outputCode.style.display = 'block';
+                outputPlaceholder.style.display = 'none';
+                saveBtn.disabled = false;
+                
+            } catch (error) {
+                alert('Error converting image: ' + error.message);
+            } finally {
+                progressBar.style.visibility = 'hidden';
+                progressBar.style.opacity = '0';
+                progressFill.style.width = '0%';
+                convertBtn.disabled = false;
+                convertBtn.classList.remove('processing');
+                convertBtn.textContent = 'Convert to C Array';
+            }
+        }
+
+        async function processImage(file, data, variableName, stripMetadata) {
+            // Analyze image with full format detection
+            const analysis = analyzeImageInfo(data, data.length);
+            const cleanVariableName = sanitizeVariableName(variableName);
+            
+            let output = `// Created with image2c\n// https://github.com/jobitjoseph/image2c\n//\n`;
+            
+            if (stripMetadata && analysis.dataOffset > 0 && analysis.dataSize > 0 && 
+                (analysis.fileType === FILETYPE.TIFF || analysis.fileType === FILETYPE.BMP)) {
+                output += `// This hex data is only the image; the header + metadata has been removed\n`;
+                output += `// ${file.name}\n// File size = ${data.length} bytes, this data = ${analysis.dataSize} bytes\n//\n`;
+            } else {
+                output += `// ${file.name}\n// Data size = ${data.length} bytes\n//\n`;
+                stripMetadata = false; // Disable if not applicable
+            }
+            
+            // Generate detailed image info comment (matching original C output)
+            let imageInfo = `// ${szType[analysis.fileType]}, Compression=${szComp[analysis.compression]}, Size: ${analysis.width} x ${analysis.height}, ${analysis.bpp}-Bpp`;
+            if (analysis.options) {
+                imageInfo += analysis.options;
+            }
+            imageInfo += '\n';
+            
+            if (analysis.fileType === FILETYPE.GIF && analysis.frames > 1) {
+                imageInfo += `// ${analysis.frames} frames\n`;
+            }
+            imageInfo += '//\n';
+            
+            output += imageInfo;
+            output += `// for non-Arduino builds...\n#ifndef PROGMEM\n#define PROGMEM\n#endif\n`;
+            output += `const uint8_t ${cleanVariableName}[] PROGMEM = {\n`;
+            
+            // Convert binary data to hex format
+            const hexData = [];
+            let dataToProcess = data;
+            
+            if (stripMetadata && analysis.dataOffset > 0 && analysis.dataSize > 0) {
+                dataToProcess = data.slice(analysis.dataOffset, analysis.dataOffset + analysis.dataSize);
+            }
+            
+            for (let i = 0; i < dataToProcess.length; i += 16) {
+                const row = [];
+                for (let j = 0; j < 16 && (i + j) < dataToProcess.length; j++) {
+                    const isLast = (i + j) === dataToProcess.length - 1;
+                    row.push(`0x${dataToProcess[i + j].toString(16).padStart(2, '0').toUpperCase()}${isLast ? '' : ','}`);
+                }
+                hexData.push('\t' + row.join(''));
+            }
+            
+            output += hexData.join('\n');
+            output += '\n};\n';
+            
+            return output;
+        }
+
+        function saveToFile() {
+            if (!generatedCode || !selectedFile) {
+                alert('Please convert an image first.');
+                return;
+            }
+
+            const outputFormat = document.getElementById('outputFormat');
+            const customExt = document.getElementById('customExt');
+            
+            let extension = outputFormat.value;
+            if (extension === 'custom') {
+                extension = customExt.value || '.txt';
+                if (!extension.startsWith('.')) {
+                    extension = '.' + extension;
+                }
+            }
+            
+            // Generate filename from original image filename
+            const baseName = selectedFile.name.replace(/\.[^/.]+$/, '');
+            const cleanBaseName = baseName.replace(/[^a-zA-Z0-9_\-]/g, '_');
+            const filename = cleanBaseName + extension;
+            
+            // Create and download file
+            const blob = new Blob([generatedCode], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            // Visual feedback
+            const originalText = saveBtn.textContent;
+            saveBtn.textContent = 'Saved!';
+            setTimeout(() => {
+                saveBtn.textContent = originalText;
+            }, 2000);
+        }
+
+        function sanitizeVariableName(name) {
+            // Basic sanitization for user input
+            let cleaned = name.replace(/[^a-zA-Z0-9_]/g, '_');
+            if (/^[0-9]/.test(cleaned)) {
+                cleaned = '_' + cleaned;
+            }
+            return cleaned || 'image_data';
+        }
+
+        function copyToClipboard() {
+            const outputCode = document.getElementById('outputCode');
+            const copyBtn = document.getElementById('copyBtn');
+            
+            if (!outputCode.textContent) {
+                alert('No code to copy. Please convert an image first.');
+                return;
+            }
+            
+            navigator.clipboard.writeText(outputCode.textContent).then(() => {
+                copyBtn.textContent = 'Copied!';
+                copyBtn.classList.add('copied');
+                setTimeout(() => {
+                    copyBtn.textContent = 'Copy';
+                    copyBtn.classList.remove('copied');
+                }, 2000);
+            }).catch(() => {
+                // Fallback for older browsers
+                const textarea = document.createElement('textarea');
+                textarea.value = outputCode.textContent;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                
+                copyBtn.textContent = 'Copied!';
+                copyBtn.classList.add('copied');
+                setTimeout(() => {
+                    copyBtn.textContent = 'Copy';
+                    copyBtn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
